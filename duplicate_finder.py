@@ -3,17 +3,19 @@
 A tool to find and remove duplicate pictures.
 
 Usage:
-    duplicate_finder.py add <path> ... [--db=<db_path>] [--parallel=<num_processes>]
-    duplicate_finder.py remove <path> ... [--db=<db_path>]
-    duplicate_finder.py clear [--db=<db_path>]
-    duplicate_finder.py show [--db=<db_path>]
-    duplicate_finder.py find [--print] [--delete] [--match-time] [--trash=<trash_path>] [--db=<db_path>]
+    duplicate_finder.py add <path> ... [--db=<db_path>] --project=<project_name> [--parallel=<num_processes>]
+    duplicate_finder.py remove <path> ... [--db=<db_path>] --project=<project_name>
+    duplicate_finder.py clear [--db=<db_path>] --project=<project_name>
+    duplicate_finder.py show [--db=<db_path>] --project=<project_name>
+    duplicate_finder.py find [--print] [--delete] [--match-time] [--trash=<trash_path>] [--db=<db_path>] --project=<project_name>
     duplicate_finder.py -h | --help
 
 Options:
     -h, --help                Show this screen
 
-    --db=<db_path>            The location of the database or a MongoDB URI. (default: ./db)
+    --db=<db_path>            [IMPORTANT] The location of the database or a MongoDB URI. (eg. mongodb://prcalc:27017)
+
+    --project=<project_name>  [IMPORTANT] The name of the project, the name must be unique. The data of the same project should be save in the same collections. If project is not specified in command line, will be requested for user input.
 
     --parallel=<num_processes> The number of parallel processes to run to hash the image
                                files (default: number of CPUs).
@@ -49,12 +51,13 @@ from termcolor import cprint
 
 
 TRASH = "./Trash/"
-DB_PATH = "./db"
+DB_PATH = "mongodb://prcalc:27017/"
+#DB_PATH = "mongodb://localhost:27017/"
 NUM_PROCESSES = psutil.cpu_count()
 
 
 @contextmanager
-def connect_to_db(db_conn_string='./db'):
+def connect_to_db(db_conn_string,col):
     p = None
 
     # Determine db_conn_string is a mongo URI or a path
@@ -63,7 +66,7 @@ def connect_to_db(db_conn_string='./db'):
         client = pymongo.MongoClient(db_conn_string)
         cprint("Connected server...", "yellow")
         db = client.image_database
-        images = db.images
+        images = db[col]
 
     # If this is not a URI
     else:
@@ -352,7 +355,12 @@ if __name__ == '__main__':
     if args['--parallel']:
         NUM_PROCESSES = int(args['--parallel'])
 
-    with connect_to_db(db_conn_string=DB_PATH) as db:
+    if args['--project']:
+        PROJECT_NAME=args['--project']
+
+    cprint("[IMPORTANT!] Connect to project: "+PROJECT_NAME, "green")
+
+    with connect_to_db(db_conn_string=DB_PATH,col=PROJECT_NAME) as db:
         if args['add']:
             add(args['<path>'], db)
         elif args['remove']:

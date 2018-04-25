@@ -19,7 +19,7 @@ I suggest you read the usage, but here are the steps to get started right away. 
 
 First, install this script. This can be done by either cloning the repository or [downloading the script](https://github.com/philipbl/duplicate-images/archive/master.zip).
 ```bash
-git clone https://github.com/philipbl/duplicate-images.git
+git clone https://github.com/joeshow79/duplicate-images.git
 ```
 
 Next, download all required modules. This script has only been tested with Python 3. I would suggest that you make a virtual environment, setting Python 3 as the default python executable (`mkvirtualenv --python=/usr/local/bin/python3 <name>`)
@@ -50,17 +50,19 @@ python duplicate_finder.py find
 
 ```bash
 Usage:
-    duplicate_finder.py add <path> ... [--db=<db_path>] [--parallel=<num_processes>]
-    duplicate_finder.py remove <path> ... [--db=<db_path>]
-    duplicate_finder.py clear [--db=<db_path>]
-    duplicate_finder.py show [--db=<db_path>]
-    duplicate_finder.py find [--print] [--delete] [--match-time] [--trash=<trash_path>] [--db=<db_path>]
+    duplicate_finder.py add <path> ... [--db=<db_path>] --project=<project_name> [--parallel=<num_processes>]
+    duplicate_finder.py remove <path> ... [--db=<db_path>] --project=<project_name>
+    duplicate_finder.py clear [--db=<db_path>] --project=<project_name>
+    duplicate_finder.py show [--db=<db_path>] --project=<project_name>
+    duplicate_finder.py find [--print] [--delete] [--match-time] [--trash=<trash_path>] [--db=<db_path>] --project=<project_name>
     duplicate_finder.py -h | --help
 
 Options:
     -h, --help                Show this screen
 
-    --db=<db_path>            The location of the database or a MongoDB URI. (default: ./db)
+    --db=<db_path>            [IMPORTANT] The location of the database or a MongoDB URI. (eg. mongodb://prcalc:27017)
+
+    --project=<project_name>  [IMPORTANT] The name of the project, the name must be unique. The data of the same project should be save in the same collections. If project is not specified in command line, will be requested for user input.
 
     --parallel=<num_processes> The number of parallel processes to run to hash the image
                                files (default: number of CPUs).
@@ -73,37 +75,37 @@ Options:
         --trash=<trash_path>  Where files will be put when they are deleted (default: ./Trash)
 ```
 
-### Add
+### Add hash records of images to the collection named 'vision'
 ```bash
-python duplicate_finder.py add /path/to/images
+python duplicate_finder.py add /path/to/images --project=vision
 ```
 
 When a path is added, image files are recursively searched for. In particular, `JPEG`, `PNG`, `GIF`, and `TIFF` images are searched for. Any image files found will be hashed. Adding a path uses 8 processes (by default) to hash images in parallel so the CPU usage is very high.
 
-### Remove
+### Remove hash records of images from the collection named 'vision'
 ```bash
-python duplicate_finder.py remove /path/to/images
+python duplicate_finder.py remove /path/to/images --project=vision
 ```
 
 A path can be removed from the database. Any image inside that path will be removed from the database.
 
-### Clear
+### Clear hash records of images from the collection named 'vision'
 ```bash
-python duplicate_finder.py clear
+python duplicate_finder.py clear --project=vision
 ```
 
 Removes all hashes from the database.
 
-### Show
+### Show the records of images from the collection named 'vision'
 ```bash
-python duplicate_finder.py show
+python duplicate_finder.py show --project=vision
 ```
 
 Prints the contents database.
 
-### Find
+### Find the duplicated images from the collection named 'vision'
 ```bash
-duplicate_finder.py find [--print] [--delete] [--match-time] [--trash=<trash_path>]
+duplicate_finder.py find [--print] [--delete] [--match-time] [--trash=<trash_path>] --project=vision
 ```
 
 Finds duplicate pictures that have been hashed. This will find images that have the same hash stored in the database. There are a few options associated with `find`. By default, when this command is run, a webpage is displayed showing duplicate pictures and a server is started that allows for the pictures to be deleted (images are not actually deleted, but moved to a trash folder -- I really don't want you to make a mistake). The first option, **`--print`**, prints all duplicate pictures and does not display a webpage or start the server. **`--delete`** automatically moves all duplicate images found to the trash. Be careful with this one. **`--match-time`** adds the extra constraint that images must have the same EXIF time stamp to be considered duplicate pictures. Last, `--trash=<trash_path>` lets you select a path to where you want files to be put when they are deleted. The default trash location is `./Trash`.
